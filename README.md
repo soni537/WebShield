@@ -57,42 +57,40 @@ Modern web security requires defense-in-depth. While backend application logic f
 
 WebShield is structured into modular layers separating the presentation interface, routing logic, asynchronous scan orchestration, modular security analyzers, and report generation.
 
-```mermaid
-graph TD
-    Client[Web Browser / API Client] -->|HTTP / JSON| FlaskApp[Flask Web Application (app.py)]
-    
-    subgraph Routing & Controllers
-        FlaskApp --> DashBP[Dashboard Blueprint (routes/dashboard.py)]
-        FlaskApp --> ScanBP[Scans Blueprint (routes/scans.py)]
-        FlaskApp --> ReportBP[Reports Blueprint (routes/reports.py)]
+
+flowchart TD
+    Client["Web Browser / API Client"] -->|HTTP / JSON| FlaskApp["Flask Web Application - app.py"]
+
+    subgraph Routing["Routing and Controllers"]
+        FlaskApp --> DashBP["Dashboard Blueprint - routes/dashboard.py"]
+        FlaskApp --> ScanBP["Scans Blueprint - routes/scans.py"]
+        FlaskApp --> ReportBP["Reports Blueprint - routes/reports.py"]
     end
 
-    subgraph Task Management & Security Guardrails
-        ScanBP --> SSRF[SSRF Validation Engine (scanner/safety.py)]
-        ScanBP --> TaskRunner[Background Task Runner (scanner/task_runner.py)]
+    subgraph Guardrails["Task Management and Security"]
+        ScanBP --> SSRF["SSRF Validation - scanner/safety.py"]
+        ScanBP --> TaskRunner["Background Task Runner - scanner/task_runner.py"]
     end
 
-    subgraph Scanner Engine
-        TaskRunner --> Orchestrator[Scan Orchestrator (scanner/orchestrator.py)]
-        Orchestrator --> ModTLS[Transport & TLS (scanner/transport.py)]
-        Orchestrator --> ModHDR[Security Headers (scanner/headers.py)]
-        Orchestrator --> ModCKY[Cookie Attributes (scanner/cookies.py)]
-        Orchestrator --> ModCRS[CORS Analyzer (scanner/cors.py)]
-        Orchestrator --> ModHTML[HTML Inspection (scanner/html_checks.py)]
-        Orchestrator --> Scoring[Scoring Engine (scanner/scoring.py)]
+    subgraph Scanner["Scanner Engine"]
+        TaskRunner --> Orchestrator["Scan Orchestrator - scanner/orchestrator.py"]
+        Orchestrator --> ModTLS["Transport and TLS - scanner/transport.py"]
+        Orchestrator --> ModHDR["Security Headers - scanner/headers.py"]
+        Orchestrator --> ModCKY["Cookie Attributes - scanner/cookies.py"]
+        Orchestrator --> ModCORS["CORS Analyzer - scanner/cors.py"]
+        Orchestrator --> ModHTML["HTML Inspection - scanner/html_checks.py"]
+        Orchestrator --> Scoring["Scoring Engine - scanner/scoring.py"]
     end
 
-    subgraph Storage & Export
-        Orchestrator --> DB[(SQLAlchemy: MySQL / SQLite)]
+    subgraph Storage["Storage and Export"]
+        Orchestrator --> DB["SQLAlchemy Database - MySQL or SQLite"]
         ReportBP --> DB
-        ReportBP --> ReportSvc[Report Service (services/report_service.py)]
-        ReportSvc --> ExportPDF[ReportLab PDF Engine]
-        ReportSvc --> ExportCSV[CSV Exporter]
-        ReportSvc --> ExportJSON[JSON Exporter]
+        ReportBP --> ReportSvc["Report Service - services/report_service.py"]
+        ReportSvc --> ExportPDF["PDF Export - ReportLab"]
+        ReportSvc --> ExportCSV["CSV Exporter"]
+        ReportSvc --> ExportJSON["JSON Exporter"]
     end
-```
 
----
 
 ## 3. Features
 
