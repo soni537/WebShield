@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="ws-hero" id="hero">
+  <div class="ws-hero-grid"></div>
+  <div class="container py-5">
+    <div class="row align-items-center min-vh-80 py-5">
+      <div class="col-lg-6 pe-lg-5">
+        <div class="ws-badge mb-4">
+          <i class="bi bi-shield-lock me-2"></i>Authorised Security Assessments Only
+        </div>
+        <h1 class="ws-hero-title">
+          Scan. Detect.<br/>
+          <span class="text-gradient">Defend.</span>
+        </h1>
+        <p class="ws-hero-subtitle mt-3 mb-4">
+          WebShield is an automated web security scanner that analyses websites for
+          HTTP security misconfigurations, insecure cookies, CORS issues, and transport
+          security weaknesses — then delivers actionable remediation guidance.
+        </p>
+
+        <!-- Scan Form -->
+        <div class="ws-scan-card" id="scan-form">
+          <form method="POST" action="{{ url_for('scans.new_scan') }}" id="mainScanForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="ws-url-input-group">
+              <span class="ws-url-prefix"><i class="bi bi-globe2"></i></span>
+              <input
+                type="url"
+                id="urlInput"
+                name="url"
+                class="ws-url-input"
+                placeholder="https://example.com"
+                required
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button type="submit" class="btn-scan" id="scanBtn">
+                <i class="bi bi-play-fill me-1"></i>
+                <span id="scanBtnText">Scan</span>
+              </button>
+            </div>
+            <p class="ws-disclaimer mt-2">
+              <i class="bi bi-lock-fill me-1"></i>
+              Only scan websites you own or have explicit written permission to test.
+            </p>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-lg-6 mt-5 mt-lg-0">
+        <div class="ws-feature-grid">
+          <div class="ws-feature-card" data-aos="fade-up" style="--delay:0s">
+            <div class="ws-feature-icon">
+              <i class="bi bi-shield-check"></i>
+            </div>
+            <h3>Security Headers</h3>
+            <p>CSP, HSTS, X-Frame-Options, Referrer-Policy and more.</p>
+          </div>
+          <div class="ws-feature-card" data-aos="fade-up" style="--delay:0.1s">
+            <div class="ws-feature-icon orange">
+              <i class="bi bi-cookie"></i>
+            </div>
+            <h3>Cookie Security</h3>
+            <p>Secure, HttpOnly, SameSite and session-cookie analysis.</p>
+          </div>
+          <div class="ws-feature-card" data-aos="fade-up" style="--delay:0.2s">
+            <div class="ws-feature-icon purple">
+              <i class="bi bi-arrow-left-right"></i>
+            </div>
+            <h3>CORS Analysis</h3>
+            <p>Wildcard origins, credential leaks, and Vary: Origin checks.</p>
+          </div>
+          <div class="ws-feature-card" data-aos="fade-up" style="--delay:0.3s">
+            <div class="ws-feature-icon teal">
+              <i class="bi bi-lock"></i>
+            </div>
+            <h3>Transport Security</h3>
+            <p>HTTPS, TLS certificate validity, and redirect analysis.</p>
+          </div>
+          <div class="ws-feature-card" data-aos="fade-up" style="--delay:0.4s">
+            <div class="ws-feature-icon red">
+              <i class="bi bi-code-square"></i>
+            </div>
+            <h3>HTML Analysis</h3>
+            <p>Form submission security, mixed content, and meta policies.</p>
+          </div>
+          <div class="ws-feature-card" data-aos="fade-up" style="--delay:0.5s">
+            <div class="ws-feature-icon green">
+              <i class="bi bi-bar-chart-line"></i>
+            </div>
+            <h3>Security Scoring</h3>
+            <p>0–100 score with documented deduction methodology.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it Works -->
+<section class="ws-steps-section py-5">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <h2 class="ws-section-title">How WebShield Works</h2>
+      <p class="text-muted">Three steps to a comprehensive security assessment</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-4">
+        <div class="ws-step-card">
+          <div class="ws-step-num">01</div>
+          <h4>Enter a URL</h4>
+          <p>Provide the URL of a website you are authorised to test. WebShield validates it for safety before proceeding.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="ws-step-card">
+          <div class="ws-step-num">02</div>
+          <h4>Automated Analysis</h4>
+          <p>Our scanning engine checks HTTP headers, cookies, CORS policy, TLS configuration, and HTML structure.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="ws-step-card">
+          <div class="ws-step-num">03</div>
+          <h4>Actionable Report</h4>
+          <p>Get a security score, categorised findings with severity levels, evidence, and concrete remediation steps.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Disclaimer Banner -->
+<section class="ws-disclaimer-section py-4">
+  <div class="container">
+    <div class="ws-disclaimer-banner">
+      <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+      <div>
+        <strong>Authorised Use Only.</strong>
+        WebShield is designed for educational purposes and authorised security assessments. Using this
+        tool against systems without explicit permission may violate applicable laws. The authors are
+        not responsible for any misuse. Always obtain written authorisation before scanning.
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('mainScanForm').addEventListener('submit', function() {
+  const btn = document.getElementById('scanBtn');
+  const txt = document.getElementById('scanBtnText');
+  btn.disabled = true;
+  txt.textContent = 'Scanning…';
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Scanning…';
+});
+</script>
+{% endblock %}

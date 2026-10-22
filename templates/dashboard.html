@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="ws-page-title mb-1"><i class="bi bi-speedometer2 me-2 text-accent"></i>Dashboard</h1>
+      <p class="text-muted mb-0">Security scan overview and statistics</p>
+    </div>
+    <a href="{{ url_for('dashboard.index') }}#scan-form" class="btn btn-accent">
+      <i class="bi bi-plus-circle me-1"></i>New Scan
+    </a>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+      <div class="ws-stat-card">
+        <div class="ws-stat-icon blue"><i class="bi bi-search"></i></div>
+        <div class="ws-stat-body">
+          <div class="ws-stat-num" id="statTotalScans">{{ total_scans }}</div>
+          <div class="ws-stat-label">Total Scans</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="ws-stat-card">
+        <div class="ws-stat-icon red"><i class="bi bi-exclamation-octagon"></i></div>
+        <div class="ws-stat-body">
+          <div class="ws-stat-num">{{ total_findings }}</div>
+          <div class="ws-stat-label">Total Findings</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="ws-stat-card">
+        <div class="ws-stat-icon orange"><i class="bi bi-fire"></i></div>
+        <div class="ws-stat-body">
+          <div class="ws-stat-num">{{ high_count + critical_count }}</div>
+          <div class="ws-stat-label">High/Critical Findings</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="ws-stat-card">
+        <div class="ws-stat-icon green"><i class="bi bi-check-circle"></i></div>
+        <div class="ws-stat-body">
+          <div class="ws-stat-num">{{ completed_scans }}</div>
+          <div class="ws-stat-label">Completed Scans</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-3 mb-4">
+    <!-- Score trend -->
+    <div class="col-lg-8">
+      <div class="ws-card h-100">
+        <div class="ws-card-header">
+          <h5 class="ws-card-title"><i class="bi bi-graph-up me-2"></i>Security Score Trend</h5>
+        </div>
+        <div class="ws-card-body">
+          {% if chart_scores %}
+            <canvas id="scoreTrendChart" height="120"></canvas>
+          {% else %}
+            <div class="ws-empty-state">
+              <i class="bi bi-bar-chart"></i>
+              <p>No completed scans yet. Run your first scan to see trends.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Severity donut -->
+    <div class="col-lg-4">
+      <div class="ws-card h-100">
+        <div class="ws-card-header">
+          <h5 class="ws-card-title"><i class="bi bi-pie-chart me-2"></i>Finding Severity</h5>
+        </div>
+        <div class="ws-card-body d-flex align-items-center justify-content-center">
+          {% if total_findings > 0 %}
+            <div style="max-width:220px; width:100%">
+              <canvas id="severityDonut"></canvas>
+            </div>
+          {% else %}
+            <div class="ws-empty-state">
+              <i class="bi bi-pie-chart"></i>
+              <p>No findings yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Scans Table -->
+  <div class="ws-card">
+    <div class="ws-card-header d-flex justify-content-between align-items-center">
+      <h5 class="ws-card-title mb-0"><i class="bi bi-clock-history me-2"></i>Recent Scans</h5>
+      <a href="{{ url_for('dashboard.scan_history') }}" class="btn btn-outline-accent btn-sm">View All</a>
+    </div>
+    <div class="ws-card-body p-0">
+      {% if recent_scans %}
+      <div class="table-responsive">
+        <table class="table ws-table mb-0" id="recentScansTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Target URL</th>
+              <th>Status</th>
+              <th>Score</th>
+              <th>Findings</th>
+              <th>Scanned At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for scan in recent_scans %}
+            <tr>
+              <td class="text-muted small">{{ scan.id }}</td>
+              <td>
+                <span class="ws-url-cell" title="{{ scan.target_url }}">
+                  {{ scan.target_url | truncate(50) }}
+                </span>
+              </td>
+              <td>
+                <span class="ws-badge-status ws-status-{{ scan.status.value if scan.status.value else scan.status }}">
+                  {% if scan.status.value == 'completed' or scan.status == 'completed' %}
+                    <i class="bi bi-check-circle me-1"></i>
+                  {% elif scan.status.value == 'running' or scan.status == 'running' %}
+                    <i class="bi bi-hourglass-split me-1 spin"></i>
+                  {% elif scan.status.value == 'failed' or scan.status == 'failed' %}
+                    <i class="bi bi-x-circle me-1"></i>
+                  {% else %}
+                    <i class="bi bi-clock me-1"></i>
+                  {% endif %}
+                  {{ (scan.status.value if scan.status.value else scan.status) | capitalize }}
+                </span>
+              </td>
+              <td>
+                {% if scan.security_score is not none %}
+                  <span class="ws-score-pill ws-score-{{ score_colour(scan.security_score) }}">
+                    {{ scan.security_score }}/100
+                  </span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="text-muted small">
+                  {% if scan.critical_count %}<span class="text-danger fw-600">{{ scan.critical_count }}C</span> {% endif %}
+                  {% if scan.high_count %}<span class="text-orange fw-600">{{ scan.high_count }}H</span> {% endif %}
+                  {% if scan.medium_count %}<span class="text-warning fw-600">{{ scan.medium_count }}M</span> {% endif %}
+                  {% if scan.low_count %}<span class="text-info">{{ scan.low_count }}L</span> {% endif %}
+                  {% if not scan.total_findings %}—{% endif %}
+                </span>
+              </td>
+              <td class="text-muted small">{{ scan.scan_started_at.strftime('%Y-%m-%d %H:%M') if scan.scan_started_at else '—' }}</td>
+              <td>
+                <a href="{{ url_for('scans.scan_status_page', scan_id=scan.id) }}" class="btn btn-sm btn-outline-accent">
+                  <i class="bi bi-eye"></i>
+                </a>
+                {% if scan.status.value == 'completed' or scan.status == 'completed' %}
+                <a href="{{ url_for('reports.report_page', scan_id=scan.id) }}" class="btn btn-sm btn-outline-secondary">
+                  <i class="bi bi-file-earmark-text"></i>
+                </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="ws-empty-state py-5">
+          <i class="bi bi-search fs-1"></i>
+          <p class="mt-3">No scans yet. <a href="{{ url_for('dashboard.index') }}#scan-form">Start your first scan →</a></p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Score Trend Chart
+{% if chart_scores %}
+const ctxTrend = document.getElementById('scoreTrendChart').getContext('2d');
+new Chart(ctxTrend, {
+  type: 'line',
+  data: {
+    labels: {{ chart_labels | tojson }},
+    datasets: [{
+      label: 'Security Score',
+      data: {{ chart_scores | tojson }},
+      borderColor: '#3b82f6',
+      backgroundColor: 'rgba(59,130,246,0.12)',
+      tension: 0.4,
+      fill: true,
+      pointBackgroundColor: '#3b82f6',
+      pointRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: {
+        min: 0, max: 100,
+        grid: { color: 'rgba(255,255,255,0.05)' },
+        ticks: { color: '#94a3b8' }
+      },
+      x: {
+        grid: { color: 'rgba(255,255,255,0.05)' },
+        ticks: { color: '#94a3b8' }
+      }
+    }
+  }
+});
+{% endif %}
+
+// Severity Donut
+{% if total_findings > 0 %}
+const ctxDonut = document.getElementById('severityDonut').getContext('2d');
+new Chart(ctxDonut, {
+  type: 'doughnut',
+  data: {
+    labels: ['Critical', 'High', 'Medium', 'Low'],
+    datasets: [{
+      data: [{{ critical_count }}, {{ high_count }}, {{ medium_count }}, {{ low_count }}],
+      backgroundColor: ['#dc2626','#ea580c','#d97706','#0891b2'],
+      borderWidth: 0,
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    cutout: '65%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { color: '#94a3b8', padding: 10, font: { size: 11 } }
+      }
+    }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

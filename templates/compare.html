@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Compare Scans{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="mb-3">
+    <a href="{{ url_for('scans.scan_status_page', scan_id=scan_a.id) }}" class="ws-back-link">
+      <i class="bi bi-arrow-left me-1"></i>Back to Scan #{{ scan_a.id }}
+    </a>
+  </div>
+
+  <h1 class="ws-page-title mb-4"><i class="bi bi-subtract me-2 text-accent"></i>Compare Scans</h1>
+
+  <!-- Comparison selector -->
+  {% if not scan_b %}
+  <div class="ws-card mb-4">
+    <div class="ws-card-body">
+      <p class="text-muted mb-3">Select a previous scan of <strong>{{ scan_a.normalized_hostname }}</strong> to compare with scan <strong>#{{ scan_a.id }}</strong>.</p>
+      {% if same_host_scans %}
+      <form method="GET" action="{{ url_for('scans.compare_scans', scan_id=scan_a.id) }}">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <select name="other" class="form-select ws-select" id="compareSelect">
+              <option value="">Select a scan…</option>
+              {% for s in same_host_scans %}
+              <option value="{{ s.id }}">
+                Scan #{{ s.id }} — {{ s.scan_started_at.strftime('%Y-%m-%d %H:%M') }} — Score: {{ s.security_score or '?' }}/100
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-accent w-100" id="compareBtn">
+              <i class="bi bi-subtract me-1"></i>Compare
+            </button>
+          </div>
+        </div>
+      </form>
+      {% else %}
+      <p class="text-muted">No other completed scans found for <strong>{{ scan_a.normalized_hostname }}</strong>.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+
+  <!-- Side-by-side comparison -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="ws-card ws-compare-card">
+        <div class="ws-card-header ws-compare-header-a">
+          <h5 class="mb-0">Scan #{{ scan_a.id }} (Reference)</h5>
+          <div class="text-muted small">{{ scan_a.scan_started_at.strftime('%Y-%m-%d %H:%M') if scan_a.scan_started_at else '—' }}</div>
+        </div>
+        <div class="ws-card-body text-center">
+          <div class="ws-score-large ws-score-{{ score_colour(scan_a.security_score or 0) }}">{{ scan_a.security_score or '—' }}/100</div>
+          <div class="mt-2 text-muted small">
+            {{ scan_a.critical_count }}C / {{ scan_a.high_count }}H / {{ scan_a.medium_count }}M / {{ scan_a.low_count }}L
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="ws-card ws-compare-card">
+        <div class="ws-card-header ws-compare-header-b">
+          <h5 class="mb-0">Scan #{{ scan_b.id }} (Compare)</h5>
+          <div class="text-muted small">{{ scan_b.scan_started_at.strftime('%Y-%m-%d %H:%M') if scan_b.scan_started_at else '—' }}</div>
+        </div>
+        <div class="ws-card-body text-center">
+          <div class="ws-score-large ws-score-{{ score_colour(scan_b.security_score or 0) }}">{{ scan_b.security_score or '—' }}/100</div>
+          <div class="mt-2 text-muted small">
+            {{ scan_b.critical_count }}C / {{ scan_b.high_count }}H / {{ scan_b.medium_count }}M / {{ scan_b.low_count }}L
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Finding comparison table -->
+  <div class="ws-card">
+    <div class="ws-card-header">
+      <h5 class="ws-card-title"><i class="bi bi-table me-2"></i>Finding Comparison</h5>
+    </div>
+    <div class="ws-card-body p-0">
+      <div class="table-responsive">
+        <table class="table ws-table mb-0" id="compareTable">
+          <thead>
+            <tr>
+              <th>Finding ID</th>
+              <th>Check Name</th>
+              <th>Scan #{{ scan_a.id }}</th>
+              <th>Scan #{{ scan_b.id }}</th>
+              <th>Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fid in all_fids %}
+            {% set fa = findings_a.get(fid) %}
+            {% set fb = findings_b.get(fid) %}
+            <tr>
+              <td class="font-mono text-muted small">{{ fid }}</td>
+              <td>{{ (fa or fb).check_name }}</td>
+              <td>
+                {% if fa %}
+                  {% set sev = fa.severity.value if fa.severity.value else fa.severity %}
+                  <span class="ws-severity-chip ws-sev-chip-{{ sev }}">{{ sev | upper }}</span>
+                {% else %}<span class="text-muted">—</span>{% endif %}
+              </td>
+              <td>
+                {% if fb %}
+                  {% set sev = fb.severity.value if fb.severity.value else fb.severity %}
+                  <span class="ws-severity-chip ws-sev-chip-{{ sev }}">{{ sev | upper }}</span>
+                {% else %}<span class="text-muted">—</span>{% endif %}
+              </td>
+              <td>
+                {% if fa and not fb %}
+                  <span class="text-success small"><i class="bi bi-check-circle me-1"></i>Resolved</span>
+                {% elif fb and not fa %}
+                  <span class="text-danger small"><i class="bi bi-plus-circle me-1"></i>New</span>
+                {% else %}
+                  <span class="text-muted small">Unchanged</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+            {% if not all_fids %}
+            <tr><td colspan="5" class="text-center text-muted py-3">No findings to compare.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+{% endblock %}

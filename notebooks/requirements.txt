@@ -1,0 +1,9 @@
+# WebShield — Notebook-specific dependencies
+# These packages are used for analysis, DataFrame formatting, and visualization
+# in notebooks/WebShield_Security_Analysis.ipynb.
+
+pandas>=2.0.0
+matplotlib>=3.8.0
+nbformat>=5.9.0
+nbclient>=0.10.0
+ipykernel>=6.25.0
