@@ -58,6 +58,7 @@ Modern web security requires defense-in-depth. While backend application logic f
 WebShield is structured into modular layers separating the presentation interface, routing logic, asynchronous scan orchestration, modular security analyzers, and report generation.
 
 
+```mermaid
 flowchart TD
     Client["Web Browser / API Client"] -->|HTTP / JSON| FlaskApp["Flask Web Application - app.py"]
 
@@ -90,6 +91,7 @@ flowchart TD
         ReportSvc --> ExportCSV["CSV Exporter"]
         ReportSvc --> ExportJSON["JSON Exporter"]
     end
+```
 
 
 ## 3. Features
